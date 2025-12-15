@@ -1,0 +1,5 @@
+risk_level,base,ft,tie
+m mildly_sensitive,0,1,0
+mildly_sensitive,20,19,0
+neutral,47,49,5
+safety_critical,8,15,1

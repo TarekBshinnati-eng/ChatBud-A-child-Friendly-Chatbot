@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatBud - Your Friendly AI Companion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #FFB8D1 0%, #A8E6FF 25%, #FFF4B2 50%, #B7F0AD 75%, #FFB8D1 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Settings Modal */
+        #settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        #settings-modal.show {
+            display: flex;
+        }
+
+        .settings-box {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .settings-box h2 {
+            color: #2B3A67;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .settings-box label {
+            display: block;
+            color: #2B3A67;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .settings-box input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #A8E6FF;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: Arial, sans-serif;
+            margin-bottom: 15px;
+        }
+
+        .settings-box input[type="text"]:focus {
+            outline: none;
+            border-color: #2B3A67;
+        }
+
+        .settings-box .hint {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .settings-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .settings-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Comic Sans MS', cursive;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .settings-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .settings-btn.save {
+            background: #B7F0AD;
+            color: #2B3A67;
+        }
+
+        .settings-btn.cancel {
+            background: #FFB8D1;
+            color: #2B3A67;
+        }
+
+        .connection-status {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .connection-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .connection-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .connection-status.checking {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* Splash Screen */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeOut 1s ease 2.5s forwards;
+        }
+
+        #splash-screen img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        #splash-screen .splash-text {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #2B3A67;
+            text-align: center;
+            /* slowed down bounce */
+            animation: bounce 1.8s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        /* Main Container */
+        #app {
+            opacity: 0;
+            animation: fadeIn 1s ease 3s forwards;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 80px;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .header-left h1 {
+            font-size: 2.5rem;
+            color: #2B3A67;
+            margin-bottom: 8px;
+        }
+
+        .header-left p {
+            font-size: 1.2rem;
+            color: #2B3A67;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            background: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: Arial, sans-serif;
+            transition: transform 0.2s;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            background: #FAFAFA;
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #A8E6FF;
+            border-radius: 10px;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .message-sender {
+            font-weight: bold;
+            color: #2B3A67;
+            font-size: 1rem;
+        }
+
+        .message-bubble {
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-bubble {
+            background: #E6F0FF;
+            align-self: flex-start;
+        }
+
+        .message.bot .message-bubble {
+            background: white;
+            align-self: flex-start;
+        }
+
+        .message-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 12px;
+            margin-top: 8px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 16px;
+            background: white;
+            border-radius: 16px;
+            width: fit-content;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #2B3A67;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Input Area */
+        .input-area {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-family: 'Comic Sans MS', cursive;
+            background: #FFF4B2;
+            resize: none;
+            min-height: 60px;
+            max-height: 120px;
+        }
+
+        #message-input:focus {
+            outline: 2px solid #A8E6FF;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .send-btn, .upload-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            font-family: 'Comic Sans MS', cursive;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .send-btn {
+            background: #A8E6FF;
+            color: #2B3A67;
+        }
+
+        .upload-btn {
+            background: #B7F0AD;
+            color: #2B3A67;
+        }
+
+        .send-btn:hover, .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Side Panel */
+        .side-panel {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-box {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .panel-box:first-child {
+            max-height: 200px; /* Limit height of notes section */
+            overflow-y: auto; /* Add scroll if needed */
+        }
+
+        .panel-box h3 {
+            color: #2B3A67;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+        }
+
+        .panel-box ul {
+            list-style: none;
+            color: #2B3A67;
+            line-height: 1.6; /* Reduced from 1.8 to 1.6 */
+            font-size: 0.85rem; /* Reduced from 0.95rem to 0.85rem */
+        }
+
+        .panel-box ul li {
+            margin-bottom: 6px; /* Reduced from 8px to 6px */
+        }
+
+        #image-preview {
+            min-height: 150px; /* Increased from 100px to 150px */
+            background: #A8E6FF;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2B3A67;
+            font-size: 0.9rem;
+            padding: 12px;
+            text-align: center;
+        }
+
+        #image-preview img {
+            max-width: 100%;
+            max-height: 200px; /* Increased from 180px to 200px */
+            border-radius: 8px;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeInOverlay 0.3s ease;
+        }
+
+        @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-box {
+            background: linear-gradient(135deg, #FFB8D1 0%, #A8E6FF 50%, #B7F0AD 100%);
+            padding: 40px 60px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            text-align: center;
+            animation: bounceIn 0.5s ease;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.3);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .loading-box h2 {
+            font-size: 2rem;
+            color: #2B3A67;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .loading-spinner span {
+            width: 12px;
+            height: 12px;
+            background: #2B3A67;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .loading-spinner span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loading-spinner span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            #app {
+                padding: 40px;
+            }
+
+            .side-panel {
+                width: 240px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #app {
+                padding: 20px;
+            }
+
+            .main-content {
+                flex-direction: column;
+            }
+
+            .side-panel {
+                width: 100%;
+                flex-direction: row;
+            }
+
+            .panel-box {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-text">Welcome to ChatBud! 🌟</div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="loading-box">
+            <h2 id="loading-message">Your answer is on the way! 🚀</h2>
+            <div class="loading-spinner">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal">
+        <div class="settings-box">
+            <h2>⚙️ Connect to ChatBud</h2>
+            <div id="connection-status" class="connection-status disconnected">
+                ❌ Not connected - Enter your Colab URL below
+            </div>
+            <label for="api-url-input">Server URL (from Google Colab):</label>
+            <input type="text" id="api-url-input" placeholder="https://something-random.trycloudflare.com">
+            <p class="hint">
+                1. Run the backend cell in Colab<br>
+                2. Copy the URL that appears<br>
+                3. Paste it here and click Save
+            </p>
+            <div class="settings-buttons">
+                <button class="settings-btn cancel" onclick="closeSettings()">Close</button>
+                <button class="settings-btn save" onclick="saveSettings()">Save & Connect</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <h1>Welcome to ChatBud !</h1>
+                <p>What questions do you have for today :)</p>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" onclick="openSettings()" title="Settings">⚙️</button>
+                <button class="icon-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen">🗗</button>
+                <button class="icon-btn" onclick="confirmExit()" title="Exit">✕</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages will be added here -->
+                </div>
+
+                <!-- Input Area -->
+                <div class="input-area">
+                    <textarea 
+                        id="message-input" 
+                        placeholder="Type here..."
+                        onkeydown="handleKeyPress(event)"
+                    ></textarea>
+                    <div class="button-group">
+                        <button class="send-btn" onclick="sendMessage()" id="send-btn">
+                            Send your message ➡
+                        </button>
+                        <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                            Add Picture 🎨
+                        </button>
+                        <input type="file" id="file-input" accept="image/*" onchange="handleImageUpload(event)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side Panel -->
+            <div class="side-panel">
+                <div class="panel-box">
+                    <h3>ChatBud's Notes</h3>
+                    <ul>
+                        <li>🌈 Remember:</li>
+                        <li>• Be kind and use polite words.</li>
+                        <li>• Ask anything! ChatBud loves curious minds.</li>
+                        <li>• Tap "Add Picture" to share an image.</li>
+                        <li>• ChatBud is a smart computer helper, not a real person!</li>
+                        <li>• Press F11 to enter fullscreen</li>
+                    </ul>
+                </div>
+                <div class="panel-box">
+                    <h3>Picture preview</h3>
+                    <div id="image-preview">No picture yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load saved URL from localStorage, default to localhost for local testing
+        let API_URL = localStorage.getItem('chatbud_api_url') || 'http://localhost:5000/api';
+        let conversationHistory = [];
+        let currentImage = null;
+        let currentImageData = null; // Store base64 image data
+        let loadingMessageInterval = null;
+
+        // Settings modal functions
+        function openSettings() {
+            const modal = document.getElementById('settings-modal');
+            const input = document.getElementById('api-url-input');
+            // Show current URL without /api suffix for cleaner display
+            input.value = API_URL.replace('/api', '');
+            modal.classList.add('show');
+            checkConnection();
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.remove('show');
+        }
+
+        async function checkConnection() {
+            const statusEl = document.getElementById('connection-status');
+            statusEl.className = 'connection-status checking';
+            statusEl.textContent = '🔄 Checking connection...';
+            
+            try {
+                const response = await fetch(`${API_URL}/health`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    statusEl.className = 'connection-status connected';
+                    statusEl.textContent = '✅ Connected! Ready to chat.';
+                } else {
+                    throw new Error('Server responded with error');
+                }
+            } catch (error) {
+                statusEl.className = 'connection-status disconnected';
+                statusEl.textContent = '❌ Not connected - Check URL and Colab';
+            }
+        }
+
+        async function saveSettings() {
+            const input = document.getElementById('api-url-input');
+            let newUrl = input.value.trim();
+            
+            if (!newUrl) {
+                alert('Please enter a URL from your Colab notebook!');
+                return;
+            }
+            
+            // Clean up URL
+            // Remove trailing slash
+            newUrl = newUrl.replace(/\/$/, '');
+            // Add /api if not present
+            if (!newUrl.endsWith('/api')) {
+                newUrl = newUrl + '/api';
+            }
+            
+            API_URL = newUrl;
+            localStorage.setItem('chatbud_api_url', newUrl);
+            
+            // Test connection
+            await checkConnection();
+            
+            const statusEl = document.getElementById('connection-status');
+            if (statusEl.classList.contains('connected')) {
+                // Connected - close modal after short delay
+                setTimeout(() => {
+                    closeSettings();
+                }, 1000);
+            } else {
+                // Not connected - keep modal open so user can fix
+                alert('Could not connect. Make sure:\n1. The Colab cell is still running\n2. The URL is correct\n3. Try copying the URL again');
+            }
+        }
+
+        // Fun loading messages
+        const loadingMessages = [
+            "Your answer is on the way! 🚀",
+            "Just a moment… I'm getting your answer ready! 🎁",
+            "Processing your question now… 🖥️",
+            "Please wait a moment 😊",
+            "Your answer will be ready shortly ✅",
+            "ChatBud is thinking hard! 🧠",
+            "Preparing your answer! ✨",
+            "Almost there… hang tight! 🎈"
+        ];
+
+        function showLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            const messageElement = document.getElementById('loading-message');
+            
+            // Show overlay
+            overlay.classList.add('show');
+            
+            // Pick a random starting message
+            let messageIndex = Math.floor(Math.random() * loadingMessages.length);
+            messageElement.textContent = loadingMessages[messageIndex];
+            
+            // Rotate to other random messages every 2 seconds (if the response takes longer)
+            loadingMessageInterval = setInterval(() => {
+                let newIndex;
+                if (loadingMessages.length > 1) {
+                    do {
+                        newIndex = Math.floor(Math.random() * loadingMessages.length);
+                    } while (newIndex === messageIndex);
+                    messageIndex = newIndex;
+                } else {
+                    newIndex = 0;
+                }
+                messageElement.textContent = loadingMessages[messageIndex];
+            }, 2000);
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.classList.remove('show');
+            
+            // Stop rotating messages
+            if (loadingMessageInterval) {
+                clearInterval(loadingMessageInterval);
+                loadingMessageInterval = null;
+            }
+        }
+
+        // Always show settings on load to ensure connection is configured
+        window.addEventListener('load', async () => {
+            // Wait for splash screen to finish, then open settings
+            setTimeout(() => {
+                openSettings();
+            }, 3600);
+        });
+
+        function addMessage(sender, text, isTyping = false, imageData = null) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const senderLabel = document.createElement('div');
+            senderLabel.className = 'message-sender';
+            senderLabel.textContent = sender === 'user' ? 'You:' : 'ChatBud:';
+
+            const bubble = document.createElement('div');
+            
+            if (isTyping) {
+                bubble.className = 'typing-indicator';
+                bubble.innerHTML = '<span></span><span></span><span></span>';
+                bubble.id = 'typing-indicator';
+            } else {
+                bubble.className = 'message-bubble';
+                
+                // Add text if present
+                if (text) {
+                    const textNode = document.createElement('div');
+                    textNode.textContent = text;
+                    bubble.appendChild(textNode);
+                }
+                
+                // Add image if present
+                if (imageData) {
+                    const img = document.createElement('img');
+                    img.src = imageData;
+                    img.className = 'message-image';
+                    bubble.appendChild(img);
+                }
+            }
+
+            messageDiv.appendChild(senderLabel);
+            messageDiv.appendChild(bubble);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            return messageDiv;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.parentElement.remove();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            const sendBtn = document.getElementById('send-btn');
+
+            if (!message && !currentImageData) {
+                alert('Please write something or add a picture!');
+                return;
+            }
+
+            // Disable send button
+            sendBtn.disabled = true;
+
+            // Add user message with image
+            addMessage('user', message || '', false, currentImageData);
+            conversationHistory.push({
+                speaker: 'user',
+                text: message || '(Picture message)',
+                timestamp: Date.now(),
+                hasImage: !!currentImageData
+            });
+
+            // Clear input
+            input.value = '';
+
+            // Show typing indicator in chat ("..." style)
+            addMessage('bot', '', true);
+            
+            // Show loading overlay with fun rotating messages
+            showLoading();
+
+            try {
+                // Send to backend (include image if present)
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    mode: 'cors',
+                    body: JSON.stringify({
+                        message: message,
+                        image: currentImageData || null,  // Send image if available
+                        conversation_id: 'default',
+                        history: conversationHistory
+                    })
+                });
+
+                const data = await response.json();
+
+                // Hide loading overlay
+                hideLoading();
+                
+                // Remove typing indicator
+                removeTypingIndicator();
+
+                if (data.success) {
+                    // Add bot response
+                    addMessage('bot', data.response);
+                    conversationHistory.push({
+                        speaker: 'bot',
+                        text: data.response,
+                        timestamp: Date.now()
+                    });
+                } else {
+                    addMessage('bot', `Oops! Something went wrong: ${data.error}`);
+                }
+            } catch (error) {
+                hideLoading();
+                removeTypingIndicator();
+                addMessage('bot', 'Sorry, I couldn\'t connect! Click the ⚙️ button to check the server URL.');
+                console.error('Error:', error);
+            } finally {
+                // Re-enable send button
+                sendBtn.disabled = false;
+            }
+
+            // Reset image after sending
+            resetImageUpload();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Check if there's already an image uploaded
+            if (currentImageData) {
+                const replace = confirm('You already have a picture selected! Do you want to replace it with this new one?');
+                if (!replace) {
+                    // User chose not to replace, reset the file input
+                    event.target.value = '';
+                    return;
+                }
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.getElementById('image-preview');
+                preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                currentImage = file;
+                currentImageData = e.target.result; // Store base64 data
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetImageUpload() {
+            // Clear the file input
+            const fileInput = document.getElementById('file-input');
+            fileInput.value = ''; // This allows selecting the same file again
+            
+            // Clear stored image data
+            currentImage = null;
+            currentImageData = null;
+            
+            // Reset preview
+            const preview = document.getElementById('image-preview');
+            preview.innerHTML = 'No picture yet';
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function confirmExit() {
+            if (confirm('Are you sure you want to exit ChatBud?')) {
+                window.close();
+                // If window.close() doesn't work (some browsers block it)
+                setTimeout(() => {
+                    window.location.href = 'about:blank';
+                }, 100);
+            }
+        }
+
+        // Add welcome message in chat after splash
+        setTimeout(() => {
+            addMessage('bot', 'Hi there! 👋 I\'m ChatBud, your friendly AI helper! What would you like to talk about today?');
+        }, 3500);
+    </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+risk_level,Base Issues,FT Issues
+m mildly_sensitive,0,0
+mildly_sensitive,4,7
+neutral,4,4
+safety_critical,10,11
