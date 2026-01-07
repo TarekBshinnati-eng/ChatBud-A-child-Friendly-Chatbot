@@ -187,6 +187,4 @@ Key findings:
 - Improved safety handling for sensitive topics
 - Better readability scores (lower Flesch-Kincaid grade)
 
-## License
 
-This project was created for educational purposes as part of EECE 490 course.
