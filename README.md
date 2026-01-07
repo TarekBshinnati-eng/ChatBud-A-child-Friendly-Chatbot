@@ -3,7 +3,7 @@
 A child-friendly Large Language Model (LLM) chatbot designed to provide safe, educational, and age-appropriate conversations for children aged 9-11 years old.
 
 **Course:** EECE 490
-**Team:** Tarek, Nour, Moataz, Ahmad
+**Team:** Tarek Bshinnati, Nour Hamieh, Moataz Maarouf, Ahmad Isber
 
 ## Project Overview
 
